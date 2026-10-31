@@ -1,77 +1,273 @@
-# Customer Intelligence & Support Copilot — Teaching Kit
+# Customer Intelligence & Support Copilot
 
-> Educational implementation of the supplied fictional Instamart-style capstone. All generated records are synthetic; no real customer data, hosted LLM, API key, or network call is needed.
+## Overview
 
-## Learning outcomes
-Students learn to (1) fetch/read CSV exports and audit data, (2) clean and persist trusted tables in SQLite, (3) write SQL and pandas analytics, (4) segment customers and train a leakage-aware lapse model, (5) redact PII and triage text with retries/output validation, and (6) retrieve policy passages and execute bounded database-backed tools.
+This repository is a reproducible, four-part capstone implementation using fictional synthetic grocery data. It audits and cleans CSV exports, stores trusted tables in SQLite, segments customers and predicts lapse, protects and routes support tickets, retrieves policy passages, and simulates a database-backed refund agent. Every model interaction uses the supplied offline `mock_llm.py`; there are no hosted model calls, API keys, real customer records, or real payments. The submission branch is `main`.
 
-## Setup and run
-Python 3.11+ recommended.
+The pipeline uses Python 3.11 or newer and SQLite 3.25 or newer. Install the pinned, free open-source dependencies in `requirements.txt`. From the repository root, `python run_project.py` runs validation and all four parts, producing the CSV, model, JSONL, and checkpoint artifacts listed below. `run_project.py` derives `data/raw/agent_scenarios.csv` from the cleaned orders because the supplied generator does not create that file.
+
+The notebooks are optional learning material: run `notebooks/Data_Cleaning_and_ML.ipynb` first, then `notebooks/LLM_Support_Copilot.ipynb`. The command-line pipeline is the reproducible submission path.
 
 ## Reproduce
-Run the commands below in order from the repository root; they generate deterministic synthetic data, install dependencies, and execute the full four-part pipeline.
 
-```bash
-python -m venv .venv
-# Windows PowerShell:
-.venv\Scripts\Activate.ps1
-# macOS/Linux:
-# source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python generate_data.py
-python run_project.py
-```
+Run these numbered commands from a clean clone, from the repository root. Activate the environment using the command for your shell in step 2.
 
-Open `notebooks/Customer_Intelligence_Support_Copilot.ipynb` and run cells from top to bottom. The notebook calls the same modules used by the scripts.
+1. Create an isolated environment:
 
-## Requirement coverage
-- Part A: data audit, cleaning, validation, and trusted SQLite persistence for customers, products and orders.
-- Part B: RFM segmentation, K-means diagnostics, PCA and a leakage-aware lapse prediction model with saved joblib output.
-- Part C: privacy-preserving ticket redaction, retry logic, structured output validation, and routing to the appropriate queue.
-- Part D: policy chunking, TF-IDF retrieval, grounded policy answers, and a database-backed refund agent with a bounded tool loop.
+   ```shell
+   python -m venv .venv
+   ```
 
-## Repository map
-- `generate_data.py`: deterministic fictional CSV and policy generation.
-- `mock_llm.py`: offline stand-in for classification, policy answers and agent tool calls.
-- `src/data_pipeline.py`: audit, clean, SQLite load, validation.
-- `src/customer_models.py`: RFM, K-means, PCA, lapse model with train/test separation.
-- `src/triage.py`: token guardrails, PII redaction, retries, response validation, routing.
-- `src/policy_rag.py`: chunking, TF-IDF retrieval and grounded policy evaluation.
-- `src/refund_agent.py`: order lookup, refund calculation, ledger and bounded tool loop.
-- `sql/queries.sql`: seven SQL learning patterns.
-- `outputs/`: generated artifacts; `state/`: agent checkpoint examples.
+2. Activate it:
 
-## How students should learn the data-fetching flow
-1. `pd.read_csv("data/raw/orders.csv", keep_default_na=False)` loads local export rows. In a production project, a fetch function might download from an approved endpoint or query a warehouse, but this exercise intentionally uses local synthetic data and has no credentials.
-2. Inspect shape, data types, null/blank counts, duplicate rows, keys and impossible values before cleaning.
-3. Apply one documented cleaning rule at a time and compare row/value counts before and after.
-4. Write clean CSVs for easy inspection and SQLite tables for repeatable SQL queries.
-5. Run assertions before downstream modelling. A failed assertion should stop the pipeline rather than silently propagate bad data.
+   ```powershell
+   # Windows PowerShell
+   .venv\Scripts\Activate.ps1
+   ```
 
-## Part A — Data foundation
-The pipeline standardizes city/gender, treats invalid ages as missing, resolves duplicate orders by keeping the latest timestamp, imputes missing amounts from catalogue price, sets negative delivery times to missing and imputes only completed-order delivery durations by product category. Review every rule before teaching; the capstone handout's numeric checkpoints should be used as acceptance tests.
+   ```shell
+   # macOS / Linux
+   source .venv/bin/activate
+   ```
 
-## Part B — Segments and lapse
-RFM uses completed orders and a fixed snapshot date. K-means diagnostics compare K=2..8; the notebook starts with K=4 for interpretable teaching. Lapse features use orders strictly before 2025-09-01, while the label uses September outcomes. The pipeline uses a preprocessing Pipeline fitted on training rows, GridSearchCV and a saved joblib model. The Premium retention list is illustrative only because the Premium label uses the whole RFM window and is post-hoc; it is not a leakage-free evaluation.
+3. Upgrade pip:
 
-## Part C — Ticket triage and privacy
-Empty and overlong tickets are skipped before model calls. Email, phone and order ID patterns are redacted before prompting. Retries handle simulated transient errors. JSON category values are allow-listed; malformed outputs are accepted only when exactly one allowed category is detectable using `re.findall`. Human review receives guardrail/invalid/budget cases, fraud goes to security, premium customers go to the premium desk, and the rest go to the support queue.
+   ```shell
+   python -m pip install --upgrade pip
+   ```
 
-## Part D — Policy retrieval and refund tools
-Policy documents are chunked with overlap, represented with `TfidfVectorizer`, and ranked using cosine similarity. The offline mock returns context-derived sentences. Refund rules are implemented in Python tools backed by SQLite: completed orders delivered in over 45 minutes qualify for a full refund; orders over INR 1000 escalate instead of auto-issuing. This is a teaching simulation, not a payment integration.
+4. Install the pinned dependencies (the direct and runtime dependencies are version-pinned from `pip freeze`) and verify the installed pins:
 
-## GitHub suggestions
-These public repositories/documentation projects are useful for learning concepts; do not copy a student's capstone solution. Adapt the patterns and cite the source in your notes:
-- pandas documentation: https://github.com/pandas-dev/pandas — CSV loading, cleaning, groupby, pivot tables.
-- scikit-learn: https://github.com/scikit-learn/scikit-learn — pipelines, preprocessing, clustering, model selection, metrics and TF-IDF.
-- Python tutorial: https://github.com/python/cpython/tree/main/Doc/tutorial — Python fundamentals.
-- Jupyter Notebook: https://github.com/jupyter/notebook — notebook workflow.
-- SQLite: https://github.com/sqlite/sqlite — SQL database engine (official mirror).
-- scikit-learn text feature extraction guide: https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction.
+   ```shell
+   python -m pip install -r requirements.txt
+   python -m pip freeze
+   ```
 
-## Limitations and next steps
-- This is a teaching implementation and may need adjustment to match every numeric checkpoint in a strict grading rubric; compare actual outputs with the supplied brief and investigate differences rather than hardcoding expected answers.
-- The offline mock model is deterministic rule-based simulation, not a real language model.
-- The refund ledger is a local JSONL audit trail, not a real transaction system.
-- Production work would add access controls, secure secret management, monitoring, schema contracts, data lineage, model drift checks and human approval workflows.
+5. Generate the deterministic raw CSV exports and five policy files:
+
+   ```shell
+   python generate_data.py
+   ```
+
+   The generator reports `generated: customers=1200 products=40 orders_raw=13084 tickets=164`.
+
+6. Run validation, SQL and pandas analyses, both lapse-model searches, ticket prompt/budget demonstrations, policy evaluations, refund scenarios, stop-safely demonstrations, and crash/resume:
+
+   ```shell
+   python run_project.py
+   ```
+
+The run creates `data/clean/{customers,products,orders}.csv`, `data/instamart.db`, `outputs/customer_segments.csv`, `outputs/lapse_model.joblib`, `outputs/retention_list.csv`, `outputs/triage_results.csv`, `outputs/triage_budget_demo.csv`, `outputs/agent_runs.jsonl`, `outputs/refund_ledger.jsonl`, `data/raw/agent_scenarios.csv`, and checkpoint JSON files under `state/`. The agent-run, ledger, and CSV outputs are regenerated by each run; checkpoints in `state/` are local working state.
+
+## Part A
+
+### Raw data audit
+
+Pandas raw-table shapes and per-column missing-value counts and percentages:
+
+| Table | Shape | Column | dtype | Missing | Missing % |
+|---|---:|---|---|---:|---:|
+| customers | 1,200 × 5 | customer_id | str | 0 | 0.00 |
+| customers | 1,200 × 5 | city | str | 0 | 0.00 |
+| customers | 1,200 × 5 | signup_date | str | 0 | 0.00 |
+| customers | 1,200 × 5 | age | float64 | 61 | 5.08 |
+| customers | 1,200 × 5 | gender | str | 30 | 2.50 |
+| products | 40 × 4 | product_id | str | 0 | 0.00 |
+| products | 40 × 4 | product_name | str | 0 | 0.00 |
+| products | 40 × 4 | category | str | 0 | 0.00 |
+| products | 40 × 4 | price_inr | int64 | 0 | 0.00 |
+| orders | 13,084 × 9 | order_id | str | 0 | 0.00 |
+| orders | 13,084 × 9 | customer_id | str | 0 | 0.00 |
+| orders | 13,084 × 9 | product_id | str | 0 | 0.00 |
+| orders | 13,084 × 9 | quantity | int64 | 0 | 0.00 |
+| orders | 13,084 × 9 | order_ts | str | 0 | 0.00 |
+| orders | 13,084 × 9 | status | str | 0 | 0.00 |
+| orders | 13,084 × 9 | discount_pct | int64 | 0 | 0.00 |
+| orders | 13,084 × 9 | order_amount | str | 53 | 0.41 |
+| orders | 13,084 × 9 | delivery_minutes | float64 | 2,541 | 19.42 |
+
+Empty fields in raw CSVs are read as missing for this audit. Ticket ingestion uses `keep_default_na=False` so blank ticket text remains an empty string.
+
+| Raw-data audit | Count |
+|---|---:|
+| Order rows | 13,084 |
+| Exact duplicate order rows | 119 |
+| Pending order rows | 656 |
+| Distinct order_id values | 12,309 |
+| Unparseable order_amount entries | 120 |
+| Negative delivery_minutes | 106 |
+| Blank delivery_minutes | 2,541 |
+| Blank customer ages | 61 |
+| Customer ages outside 10–100 | 6 |
+| Raw city spellings | 24 |
+| Distinct non-blank raw gender spellings | 10 |
+| Blank genders | 30 |
+
+### Cleaning and validation
+
+| Rule applied in order | Changed / resulting values |
+|---|---:|
+| Trim city and convert to title case | 476 city values standardized; six cities remain |
+| Normalize gender spellings; map blanks/unknown spellings to `unknown` | 950 values mapped |
+| Invalidate out-of-range ages, then fill missing ages with city median using `groupby` + `transform` | 6 out-of-range invalidated; 67 ages imputed |
+| Parse signup and order timestamps | 0 invalid signup dates; 0 invalid order timestamps |
+| Remove exact duplicate order rows | 119 removed |
+| Keep latest timestamp per order_id after exact de-duplication | 656 older duplicate-order rows removed |
+| Coerce quantity and discount to numeric | 0 invalid quantities; 0 invalid discounts defaulted to zero |
+| Convert amounts to numeric; fill missing values from catalogue price × quantity × (1 − discount / 100) | 112 missing amounts filled in the final, unique-order table |
+| Convert negative delivery times to missing; impute completed orders with their product-category median | 105 negatives made missing; 774 completed delivery times imputed |
+| Leave cancelled delivery times missing | 1,199 remain missing |
+
+The final customer table has 1,200 rows: Pune 227, Delhi 210, Bengaluru 197, Chennai 191, Hyderabad 191, Mumbai 184; gender counts are female 610, male 560, unknown 30. All ages are present and range from 18 to 60. The final orders table has 12,309 unique orders: 11,110 completed and 1,199 cancelled; it has no pending rows, no missing order amounts, no completed rows with a missing delivery time, and 1,199 cancelled rows with a missing delivery time. Completed-order revenue is INR 2,998,668.80. `src/data_pipeline.py` asserts these reference checkpoints and prints exactly `ALL CHECKPOINTS PASSED` on success. SQLite contains `customers`, `products`, and `orders`; timestamps are stored as `YYYY-MM-DD HH:MM:SS`.
+
+### SQL analysis
+
+All seven statements in `sql/queries.sql` are executed using `pandas.read_sql_query` against the generated database.
+
+| Query | Result |
+|---|---|
+| Q1 — `WHERE` then `HAVING` | 30 customers |
+| Q2 — city/category join | 30 cells; total INR 2,998,668.80; largest cell Bengaluru / Electronics, INR 233,909.45 |
+| Q3 — products above average price | 11 products |
+| Q4 — customers without completed orders | 25 customers |
+| Q5 — customer spend above average | 550 customers; mean customer spend INR 2,552.06 |
+| Q6 — city-partitioned ranking | Top spenders: Bengaluru C0082 (INR 12,856.20), Chennai C0930 (INR 10,151.40), Delhi C0291 (INR 13,742.60), Hyderabad C0743 (INR 12,730.05), Mumbai C0693 (INR 14,766.55), Pune C0426 (INR 10,377.10); 8 rows have `RANK()` different from `ROW_NUMBER()` |
+| Q7 — daily running total | 183 days; ending cumulative revenue INR 2,998,668.80 |
+
+Ties share a `RANK()` value, while `ROW_NUMBER()` always assigns a distinct sequential value, so tied rows make the two rankings differ.
+
+### Pandas cross-check and exploration
+
+`pivot_table(..., margins=True)` reproduces the Q2 grand total of INR 2,998,668.80. City-level completed-order totals include Bengaluru: sum INR 523,643.40, mean INR 276.47, 1,894 orders; Mumbai: sum INR 479,058.50, mean INR 297.00, 1,613 orders.
+
+| Completed order_amount statistic | Result |
+|---|---:|
+| Mean / median | INR 269.91 / INR 135.00 |
+| Skewness | 4.61 |
+| Q1 / Q3 | INR 64.80 / INR 297.00 |
+| Lower / upper 1.5×IQR fence | INR -283.50 / INR 645.30 |
+| Outliers below / above fences | 0 / 897 |
+
+The data describes synthetic completed grocery orders and their prices, quantities, discounts, and delivery times. Amounts are strongly right-skewed: the mean is INR 269.91 versus a median of INR 135.00, with 897 values above the upper fence; these large baskets are worth investigating but are not automatically errors. The largest absolute correlation is order amount versus discount at -0.095; amount versus quantity is +0.087. These relationships are weak, and correlation of this size does not establish causation.
+
+## Part B
+
+### RFM segments
+
+RFM uses completed orders only and snapshot `2025-10-01 00:00:00`. It covers 1,175 customers: recency median 19 days (range 0–180), mean frequency 9.46 (maximum 33), and mean monetary value INR 2,552.06 (maximum INR 14,766.55). The scaled K-means diagnostics are:
+
+| K | Inertia | Silhouette |
+|---:|---:|---:|
+| 2 | 1,820.8 | 0.465 |
+| 3 | 1,268.2 | 0.445 |
+| 4 | 743.1 | 0.526 |
+| 5 | 617.4 | 0.480 |
+| 6 | 503.2 | 0.482 |
+| 7 | 408.5 | 0.416 |
+| 8 | 366.5 | 0.412 |
+
+K=4 was selected for its strongest silhouette and useful business profiles. Inertia decreases as K increases because adding centroids can only reduce within-cluster distances; the lower K=8 inertia alone does not justify the added model complexity or make the segments more actionable.
+
+| Segment ID | Size | Mean recency (days) | Mean frequency | Mean monetary (INR) | Business name and suggested action |
+|---:|---:|---:|---:|---:|---|
+| 0 | 436 | 28.86 | 3.77 | INR 1,057.62 | Occasional — encourage a repeat order with a targeted offer |
+| 1 | 138 | 24.12 | 6.77 | INR 7,129.70 | Premium — personalized retention and service |
+| 2 | 419 | 8.77 | 19.40 | INR 3,410.02 | Frequent — replenishment and cross-sell |
+| 3 | 182 | 109.04 | 2.20 | INR 685.99 | Dormant — reactivation campaign and feedback request |
+
+Segment 1 has the highest mean monetary value and is the Premium segment. Cluster IDs are arbitrary labels, not an ordered scale. PCA on scaled RFM explains 0.634 and 0.218 of variance in its first two components, 0.852 total. The saved `outputs/customer_segments.csv` contains the required customer, RFM, segment, and Premium columns.
+
+### Lapse prediction
+
+The cohort contains 1,156 customers with completed orders before 2025-09-01; 443 (38.32%) had no completed order during September. The stratified split contains 924 training rows and 232 untouched test rows. Features use pre-cutoff completed-order RFM, discount, cancellation rate, delivery time, favourite category, city, age, gender, and tenure. No order dated 2025-09-01 or later, and no Part B segment label, enters the features. The code asserts that features contain no missing values. Scalers and one-hot encoders are fitted inside each training-fold pipeline; neither the encoders, scaler, nor resampler sees test rows. The training scaler's frequency mean is 8.115 versus 8.029 for the full cohort because the scaler is fitted on the training partition only.
+
+The always-not-lapsed baseline has 61.6% accuracy and positive-class F1 of 0. Grid search uses five-fold F1 scoring: logistic regression uses C ∈ {0.01, 0.1, 1, 10, 100}; the 45-fit random-forest search uses depth ∈ {3, 5, 8} and minimum leaf size ∈ {5, 10, 20}.
+
+| Model | Best parameters | CV F1 | Test confusion matrix (actual rows, predicted columns: 0, 1) | Positive-class precision | Recall | F1 |
+|---|---|---:|---|---:|---:|---:|
+| Logistic regression | C=100 | 0.651 | [[111, 32], [31, 58]] | 0.644 | 0.652 | 0.648 |
+| Random forest | depth=8, leaf=10 | 0.687 | [[110, 33], [32, 57]] | 0.633 | 0.640 | 0.637 |
+
+The logistic model is selected because it has the stronger held-out F1 and precision here, while remaining easier to explain. Missing a lapsing customer loses a retention opportunity; wrongly targeting a loyal customer wastes an offer, so both recall and precision matter. The selected model is saved and reloaded from `outputs/lapse_model.joblib`; test predictions match exactly.
+
+Training-only random oversampling balances the logistic training set at 570 non-lapsed and 570 lapsed rows. On the unchanged test set, precision/recall/F1 move from 0.644/0.652/0.648 to 0.589/0.854/0.697. Recall moves most: the retention team catches more true lapsers, with more false-positive offers.
+
+| Top random-forest feature | Importance |
+|---|---:|
+| Monetary | 0.280 |
+| Frequency | 0.278 |
+| Recency | 0.109 |
+| Average delivery time | 0.060 |
+| Cancellation rate | 0.052 |
+
+The logistic coefficients are +0.039 for recency (older activity is associated with more lapse risk), -1.697 for frequency (more orders with less lapse risk), and +0.283 for monetary after controlling for the other features. These are associations, not causal effects. `outputs/retention_list.csv` ranks the Premium test customers by predicted lapse probability; 3 of its 10 customers actually lapsed. The Premium label uses the full RFM window including September, so this retention list is illustrative and not a leakage-free evaluation.
+
+## Part C
+
+### Guardrails, privacy, and prompts
+
+Tickets are processed in source-file order. Four empty tickets are marked `skipped_empty`, and four tickets over the 400-token limit (734 estimated tokens each) are marked `flagged_long`; neither group triggers a model call. Redaction across all 164 tickets replaces 55 emails, 91 phone numbers, and 132 order IDs (278 total); reapplying all three patterns finds zero remaining matches. The model's user message is exactly the redacted ticket text. Both system prompts request JSON-only output and allow only billing, delivery, technical, or fraud; the zero-shot prompt has no `EXAMPLES:` section, while the few-shot prompt includes labelled delivery and fraud examples.
+
+Calls retry transient errors up to three times after the first attempt, with exponential backoff and jitter; one log line records each retry's ticket, number, and delay. The two full runs each recover all 19 injected transient errors on retry number 0, whose delays fall between 0.045 and 0.0575 seconds. Each full run resets the deterministic mock immediately before processing. Output validation accepts an allowed JSON category, or for non-JSON text accepts only one allowed category found using `re.findall`; all other answers go to human review without guessing.
+
+### Prompt comparison and budget
+
+| Run | Classified | Correct | Accuracy | Total response tokens | Tokens per classified ticket |
+|---|---:|---:|---:|---:|---:|
+| Zero-shot | 147 | 126 | 85.7% | 8,932 | 60.76 |
+| Few-shot | 147 | 147 | 100.0% | 13,768 | 93.66 |
+
+Zero-shot confusion matrix:
+
+| True \ Predicted | Billing | Delivery | Fraud | Technical |
+|---|---:|---:|---:|---:|
+| Billing | 38 | 0 | 0 | 0 |
+| Delivery | 0 | 36 | 0 | 0 |
+| Fraud | 11 | 0 | 23 | 0 |
+| Technical | 10 | 0 | 0 | 29 |
+
+Few-shot costs 4,836 additional response tokens, or 32.90 more tokens per classified ticket, and raises measured accuracy by 14.3 percentage points. In this mock run the extra examples are worth the cost when fraud and technical misrouting is unacceptable: they correct all 21 zero-shot misclassifications. For lower-risk triage where human review is inexpensive, zero-shot may be an acceptable cheaper first pass.
+
+The zero-shot budget demonstration uses 6,000 tokens and stops before a call once the running total reaches the budget; 51 tickets are marked `budget_exhausted`. `outputs/triage_results.csv` has 164 rows from the few-shot, 100,000-token run. Its columns are `ticket_id`, `customer_id`, `status`, `category`, `segment_name`, `priority`, `route`, and `tokens_used`. Its statuses are 135 `classified_json`, 12 `classified_keyword`, 9 `flagged_invalid_output`, 4 `skipped_empty`, and 4 `flagged_long`. The JSON and keyword cases are rule-validated; invalid outputs and guardrail cases route to human review. Otherwise fraud routes to high-priority security, Premium customers to high-priority premium support, and other tickets to normal support. Missing segment records are treated as non-Premium. `outputs/triage_budget_demo.csv` contains the budget-limited run.
+
+## Part D
+
+### Policy RAG
+
+The five policy documents produce 15 overlapping 40-word chunks (refund 4, delivery 3, escalation 3, payment 3, privacy 2) with 10-word overlap. `TfidfVectorizer` represents each chunk: term frequency reflects how often a word appears in the chunk, while inverse document frequency gives less weight to words common across chunks. TF-IDF is lexical, so equivalent phrasings using different words may not retrieve the same passage. For `refund policy late delivery`, the top three retrieved chunks all come from `refund_policy.txt`. The assistant sends the three source-tagged chunks and question to the offline mock, answers only from that context, and returns its text and source names.
+
+| Chunk overlap | Expected document found (12 answerable) | Expected fact present (12 answerable) | Out-of-scope fallback (2 questions) |
+|---|---:|---:|---:|
+| 10 words | 12/12 | 12/12 | 2/2 |
+| 0 words | 12/12 | 10/12 | 2/2 |
+
+With zero overlap, the full-refund delivery-time answer and the payment-failure 48-hour answer fail because their supporting facts straddle chunk boundaries and are truncated from the retrieved context. Both out-of-scope questions still receive the required `I could not find...` fallback.
+
+### Refund agent and tools
+
+The five tools are `get_order`, `search_policy`, `calculate_refund`, `issue_refund`, and `escalate_to_human`, specified in `TOOLS_SPEC` with JSON-style parameters and dispatched through `TOOL_MAP`. Only completed orders delivered in more than 45 minutes qualify for a full refund. All simulated requests are treated as raised within the policy's seven-day window. Refunds above INR 1,000 are recorded for human approval; they are not automatically issued. The ledger is a local simulation, not a payment integration.
+
+| Scenario | Status | Refund | Model calls | Tokens |
+|---|---|---:|---:|---:|
+| S1 | REFUND | INR 128.25 | 5 | 887 |
+| S2 | REFUND | INR 135.00 | 5 | 887 |
+| S3 | ESCALATE | INR 1,999.00 | 5 | 894 |
+| S4 | DENIED | INR 0.00 | 4 | 589 |
+| S5 | DENIED | INR 0.00 | 3 | 334 |
+| S6 | NOT_FOUND | INR 0.00 | 2 | 76 |
+| S7 | FALLBACK_MAX_ITERATIONS | INR 0.00 | 6 | 3,012 |
+
+The S1 token-limit demonstration ends with `FALLBACK_TOKEN_LIMIT`; the zero-second timeout demonstration ends with `FALLBACK_TIMEOUT`. Both stop safely and return a handoff summary with completed steps.
+
+For crash/resume, S1 is deliberately interrupted after its second tool observation has been checkpointed. `resume_agent` continues from that checkpoint without repeating prior tools; the combined tool sequence is `get_order` → `search_policy` → `calculate_refund` → `issue_refund`, and the final result is REFUND for INR 128.25. `outputs/agent_runs.jsonl` records each scenario and demonstration with its scenario ID, status, final answer, call/token totals, and tool steps; `outputs/refund_ledger.jsonl` records issue/escalation actions; `state/` holds resumable checkpoints.
+
+This ReAct run uses 5 calls for S1, 3 for S5, and 2 for S6 (887, 334, and 76 response tokens respectively). A plan-and-execute agent could ask for a complete tool plan in one call and use fewer calls for ordinary requests, but observations can invalidate a plan: this agent sees a missing order or cancelled status before attempting a refund. A planner must replan on those observations, which adds calls and complexity. For refunds I would choose ReAct because each side-effecting action follows a fresh database and policy observation, making the decision path easier to audit.
+
+## Limitations and Next Steps
+
+- All customer/order data is synthetic, and `mock_llm.py` is a deterministic rule-based stand-in rather than a real language model.
+- Refund issuance and escalation only append to a local JSONL ledger; no money moves and no production payment service is connected.
+- TF-IDF retrieval is based on word overlap and may miss semantically equivalent wording.
+- The lapse model is evaluated on one fixed train/test split; monitor drift and evaluate across time before production use.
+- The Premium flag uses whole-window RFM, including the month used for the lapse label; the retention list is illustrative and is not a leakage-free evaluation.
+- Production deployment would require access control, secure secret management, observability, data lineage, model monitoring, and human approval workflows.

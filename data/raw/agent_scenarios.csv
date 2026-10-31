@@ -1,0 +1,8 @@
+scenario_id,customer_id,message,expected_outcome,expected_refund_inr
+S1,C0007,My order ORD-100048 arrived very late. Please refund it.,REFUND,128.25
+S2,C0008,My order ORD-100067 was delivered late. Please refund it.,REFUND,135.0
+S3,C0016,My order ORD-100145 arrived very late. Please refund it.,ESCALATE,1999.0
+S4,C0001,Please refund my order ORD-100001.,DENIED,0.0
+S5,C0003,Please refund my cancelled order ORD-100020.,DENIED,0.0
+S6,C0001,Refund for order ORD-999999 please.,NOT_FOUND,0.0
+S7,C0007,[LOOP] Refund order ORD-100048.,FALLBACK,0.0
