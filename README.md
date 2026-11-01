@@ -6,7 +6,7 @@ This repository is a reproducible, four-part capstone implementation using ficti
 
 The pipeline uses Python 3.11 or newer and SQLite 3.25 or newer. Install the pinned, free open-source dependencies in `requirements.txt`. From the repository root, `python run_project.py` runs validation and all four parts, producing the CSV, model, JSONL, and checkpoint artifacts listed below. `run_project.py` derives `data/raw/agent_scenarios.csv` from the cleaned orders because the supplied generator does not create that file.
 
-The notebooks are optional learning material: run `notebooks/Data_Cleaning_and_ML.ipynb` first, then `notebooks/LLM_Support_Copilot.ipynb`. The command-line pipeline is the reproducible submission path.
+The notebooks are optional learning material: run `notebooks/Data_Cleaning_and_ML.ipynb` first, then `notebooks/LLM_Support_Copilot.ipynb`. After installing dependencies, register the environment as a Jupyter kernel and select **Python (Instamart Copilot)** in VS Code. The command-line pipeline is the reproducible submission path.
 
 ## Reproduce
 
@@ -41,6 +41,7 @@ Run these numbered commands from a clean clone, from the repository root. Activa
    ```shell
    python -m pip install -r requirements.txt
    python -m pip freeze
+   python -m ipykernel install --user --name instamart-copilot --display-name "Python (Instamart Copilot)"
    ```
 
 5. Generate the deterministic raw CSV exports and five policy files:
